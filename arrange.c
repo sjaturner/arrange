@@ -63,7 +63,7 @@ int recurse(int argc, char *argv[], int arg, int level, struct link *link)
         }
         else if (!strcmp(argv[arg], "}"))
         {
-            return arg + 1;
+            return arg;
         }
         else if (isdigit(argv[arg][0]))
         {

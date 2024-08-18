@@ -47,25 +47,22 @@ int recurse(int argc, char *argv[], int arg, int level, struct link *link)
     char *tag = 0;
     int count = 0;
 
-    printf("recurse arg:%d level:%d\n", arg, level);
-
     for (; arg < argc; ++arg)
     {
         if (0)
         {
         }
-        else if (0 == strcmp(argv[arg], "{"))
+        else if (!strcmp(argv[arg], "{"))
         {
             int next = 0;
             for (int iter = 0; iter < count; ++iter)
             {
-                next = recurse(arg, argv, arg + 1, level + 1, &(struct link) {.link = link,.tag = tag,.iter = iter });
+                next = recurse(argc, argv, arg + 1, level + 1, &(struct link) {.link = link,.tag = tag,.iter = iter });
             }
             arg = next;
         }
-        else if (0 == strcmp(argv[arg], "}"))
+        else if (!strcmp(argv[arg], "}"))
         {
-            printf("return a %d\n", arg + 1);
             return arg + 1;
         }
         else if (isdigit(argv[arg][0]))
@@ -86,7 +83,6 @@ int recurse(int argc, char *argv[], int arg, int level, struct link *link)
             tag = argv[arg];
         }
     }
-    printf("return b %d\n", arg);
     return arg;
 }
 

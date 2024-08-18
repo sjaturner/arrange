@@ -233,6 +233,7 @@ int recurse(int argc, char *argv[], int arg, int level, struct link *link, struc
             {
                 output(count, level, &(struct link) {.link = link,.tag = tag,.iter = 0 }, output_controls);
                 output_controls = output_controls_param;
+                tag = 0;
             }
 
             if (eof)

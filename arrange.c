@@ -1,8 +1,9 @@
 #include <assert.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
 #include <ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 struct link
 {
@@ -11,6 +12,13 @@ struct link
     int *iter;
 };
 
+int repeat;
+int quiet;
+int fill;
+int indices;
+
+int eof;
+
 char *get_token(void)
 {
     char *token = calloc(256 + 1, 1);
@@ -18,8 +26,18 @@ char *get_token(void)
     {
         return strdup(token);
     }
+    else if (fill)
+    {
+        return "@";
+    }
+    else if (repeat)
+    {
+        eof = 1;
+        return "?";
+    }
     else
     {
+        eof = 1;
         return 0;
     }
 }
@@ -41,7 +59,7 @@ void output_link(struct link *link)
         printf("%s ", link->tag);
     }
 
-    if (link->iter)
+    if (indices && link->iter)
     {
         printf("[%d] ", *link->iter);
     }
@@ -60,10 +78,14 @@ void output(int elems, int level, struct link *link)
         if (token)
         {
             printf("%s ", token);
-        }
+        } 
     }
 
-    output_link(link);
+    if (!quiet)
+    {
+        printf(" # ");
+        output_link(link);
+    }
 
     printf("\n");
 }
@@ -98,6 +120,11 @@ int recurse(int argc, char *argv[], int arg, int level, struct link *link)
             {
                 output(count, level, &(struct link) {.link = link,.tag = tag,.iter = 0 });
             }
+
+            if (eof)
+            {
+                exit(EXIT_SUCCESS);
+            }
         }
         else
         {
@@ -109,6 +136,29 @@ int recurse(int argc, char *argv[], int arg, int level, struct link *link)
 
 int main(int argc, char *argv[])
 {
-    recurse(argc - 1, argv + 1, 0, 0, 0);
+    int opt = 0;
+    while ((opt = getopt(argc, argv, "qrfi")) != -1) {
+        switch (opt) {
+            case 'q':
+                quiet = 1;
+                break;
+            case 'r':
+                repeat = 1;
+                break;
+            case 'f':
+                fill = 1;
+                break;
+            case 'i':
+                indices = 1;
+                break;
+            default: /* '?' */
+                exit(EXIT_FAILURE);
+        }
+    }
+
+    do
+    {
+        recurse(argc - optind, argv + optind, 0, 0, 0);
+    } while (repeat);
     return 0;
 }

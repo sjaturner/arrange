@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -46,6 +47,8 @@ int recurse(int argc, char *argv[], int arg, int level, struct link *link)
     char *tag = 0;
     int count = 0;
 
+    printf("recurse arg:%d level:%d\n", arg, level);
+
     for (; arg < argc; ++arg)
     {
         if (0)
@@ -62,29 +65,33 @@ int recurse(int argc, char *argv[], int arg, int level, struct link *link)
         }
         else if (0 == strcmp(argv[arg], "}"))
         {
+            printf("return a %d\n", arg + 1);
             return arg + 1;
         }
         else if (isdigit(argv[arg][0]))
         {
             count = atoi(argv[arg]);
-            if (arg + 1 >= argc || strcmp(argv[arg + 1], "{"))
+            if (arg + 1 >= argc)
             {
-                for (int emit = 0; emit < count; ++emit)
-                {
-                    output(count, level, &(struct link) {.link = link,.tag = tag,.iter = 0 });
-                }
+                output(count, level, &(struct link) {.link = link,.tag = tag,.iter = 0 });
+            }
+            else if (strcmp(argv[arg + 1], "{"))
+            {
+                output(count, level, &(struct link) {.link = link,.tag = tag,.iter = 0 });
             }
         }
         else
         {
+            assert(0);
             tag = argv[arg];
         }
     }
+    printf("return b %d\n", arg);
     return arg;
 }
 
 int main(int argc, char *argv[])
 {
-    recurse(argc, argv, 0, 0, 0);
+    recurse(argc - 1, argv + 1, 0, 0, 0);
     return 0;
 }

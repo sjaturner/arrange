@@ -69,7 +69,19 @@ struct output_controls
 {
     int reverse;
     int hide;
+    int base;
 };
+
+void reverse_pointer_list(int elems, char **list)
+{
+    for (int index = 0; index < (elems + 1) / 2; ++index)
+    {
+        char *tmp = list[index];
+
+        list[index] = list[elems - 1 - index];
+        list[elems - 1 - index] = tmp;
+    }
+}
 
 void output(int elems, int level, struct link *link, struct output_controls output_controls)
 {
@@ -90,13 +102,41 @@ void output(int elems, int level, struct link *link, struct output_controls outp
         list[index] = get_token();
     }
 
+    if (output_controls.reverse)
+    {
+        reverse_pointer_list(elems, list);
+    }
+
     if (visible)
     {
-        if (output_controls.reverse)
+        if (output_controls.base)
         {
-            for (int index = elems - 1; index >= 0; --index)
+            int length = 0;
+            for (int index = 0; index < elems; ++index)
             {
-                printf("%s ", list[index]);
+                length += strlen(list[index]);
+            }
+            char *buffer = calloc(length + 1, 1);
+            int pos = 0;
+            for (int index = 0; index < elems; ++index)
+            {
+                int chunk = strlen(list[index]);
+                memcpy(buffer + pos, list[index], chunk);
+                pos += chunk;
+            }
+
+            char *end = 0;
+            unsigned long long value = strtoull(buffer, &end, output_controls.base);
+
+            printf("buffer: %s\n", buffer);
+
+            if (end != buffer + pos + 1)
+            {
+                printf("%llu", value);
+            }
+            else
+            {
+                printf("?");
             }
         }
         else
@@ -177,6 +217,11 @@ int recurse(int argc, char *argv[], int arg, int level, struct link *link, struc
                     case 'h':
                         output_controls.hide = 1;
                         break;
+                    case 'b':
+                        if (strlen(argv[arg]) >= 3 && isdigit(argv[arg][2]))
+                        {
+                            output_controls.base = atoi(argv[arg] + 2);
+                        }
                 }
             }
             else

@@ -78,7 +78,7 @@ void output(int elems, int level, struct link *link)
         if (token)
         {
             printf("%s ", token);
-        } 
+        }
     }
 
     if (!quiet)
@@ -137,8 +137,10 @@ int recurse(int argc, char *argv[], int arg, int level, struct link *link)
 int main(int argc, char *argv[])
 {
     int opt = 0;
-    while ((opt = getopt(argc, argv, "qrfi")) != -1) {
-        switch (opt) {
+    while ((opt = getopt(argc, argv, "qrfi")) != -1)
+    {
+        switch (opt)
+        {
             case 'q':
                 quiet = 1;
                 break;
@@ -159,6 +161,7 @@ int main(int argc, char *argv[])
     do
     {
         recurse(argc - optind, argv + optind, 0, 0, 0);
-    } while (repeat);
+    }
+    while (repeat);
     return 0;
 }

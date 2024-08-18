@@ -102,8 +102,9 @@ The decorative stuff can be omitted using the '-q' flag (quiet).
 ## Additional flags
 
 There are some silly embellishments which determine the behaviour when there are either:
-    * Excess input values on stdin, where the '-r' flag can be used to arrange all of the input with the same structure, in a loop.
-    * Too few input values where the '-f' flag instructs the program to pretend there were enough input values and replace the missing items with '?'
+
+* Excess input values on stdin, where the '-r' flag can be used to arrange all of the input with the same structure, in a loop.
+* Too few input values where the '-f' flag instructs the program to pretend there were enough input values and replace the missing items with '?'
 
 # Conclusion
 

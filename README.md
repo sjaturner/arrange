@@ -112,7 +112,7 @@ On reflection, this is just another thing which is very specific to my
 requirements. I'm not sure whether anyone else would find it useful but
 I'd be interested to find out.
 
-Of course, the input values don't need to be hexadecimal values. Any
+Of course, the input values don't need to be hexadecimal octets. Any
 list of whitespace separated tokens would do. In some ways this program
 can be thought of as a structured replacement for 'xargs -n' or paste.
 

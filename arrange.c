@@ -2,7 +2,9 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
+#include <inttypes.h>
 #include <unistd.h>
 
 struct link
@@ -69,12 +71,12 @@ struct output_controls
 {
     int reverse;
     int hide;
-    int base;
+    char format;
 };
 
 void reverse_pointer_list(int elems, char **list)
 {
-    for (int index = 0; index < (elems + 1) / 2; ++index)
+    for (int index = 0; index < elems / 2; ++index)
     {
         char *tmp = list[index];
 
@@ -109,34 +111,67 @@ void output(int elems, int level, struct link *link, struct output_controls outp
 
     if (visible)
     {
-        if (output_controls.base)
+        if (output_controls.format)
         {
-            int length = 0;
-            for (int index = 0; index < elems; ++index)
+            int error = 0;
+            switch (elems)
             {
-                length += strlen(list[index]);
-            }
-            char *buffer = calloc(length + 1, 1);
-            int pos = 0;
-            for (int index = 0; index < elems; ++index)
-            {
-                int chunk = strlen(list[index]);
-                memcpy(buffer + pos, list[index], chunk);
-                pos += chunk;
+                case 1:
+                case 2:
+                case 4:
+                case 8:
+                    break;
+                default:
+                    error = 1;
             }
 
-            char *end = 0;
-            unsigned long long value = strtoull(buffer, &end, output_controls.base);
-
-            printf("buffer: %s\n", buffer);
-
-            if (end != buffer + pos + 1)
+            if (error)
             {
-                printf("%llu", value);
+                printf("? ");
             }
             else
             {
-                printf("?");
+                uint64_t value = 0;
+                uint64_t sign = 0;
+                for (int index = 0; index < elems; ++index)
+                {
+                    uint64_t byte = strtol(list[index], 0, 16);
+
+                    sign = (uint64_t)0x80 << 8 * index;
+                    value |= (byte & 0xff) << 8 * index;
+                }
+
+                if (output_controls.format == 'd')
+                {
+                    int64_t output = (value & sign) && elems < 8 ? value - (sign << 1) : value;
+                    printf("%" PRId64 " ", output);
+                }
+                else if (output_controls.format == 'u')
+                {
+                    printf("%" PRIu64 " ", value);
+                }
+                else if (output_controls.format == 'x')
+                {
+                    char *fmt = 0;
+                    switch (elems)
+                    {
+                        case 1:
+                            fmt = "0x%02" PRIx64 " ";
+                            break;
+                        case 2:
+                            fmt = "0x%04" PRIx64 " ";
+                            break;
+                        case 4:
+                            fmt = "0x%08" PRIx64 " ";
+                            break;
+                        case 8:
+                            fmt = "0x%016" PRIx64 " ";
+                            break;
+                        default:
+                            error = 1;
+                    }
+                    printf(fmt, value);
+                }
             }
         }
         else
@@ -217,11 +252,11 @@ int recurse(int argc, char *argv[], int arg, int level, struct link *link, struc
                     case 'h':
                         output_controls.hide = 1;
                         break;
-                    case 'b':
-                        if (strlen(argv[arg]) >= 3 && isdigit(argv[arg][2]))
-                        {
-                            output_controls.base = atoi(argv[arg] + 2);
-                        }
+                    case 'u':
+                    case 'd':
+                    case 'x':
+                        output_controls.format = argv[arg][1];
+                        break;
                 }
             }
             else

@@ -9,6 +9,15 @@ struct test
     unsigned int ui;
 };
 
+struct test test = {
+    .i = 123,
+    .str = "foo",
+    .a[0][1] = 1,
+    .a[1][1] = 12,
+    .a[2][0] = 20,
+    .ui = 0x12345678,
+};
+
 void dump(void *base, size_t length)
 {
     unsigned char *p = base;
@@ -22,14 +31,6 @@ void dump(void *base, size_t length)
 
 int main()
 {
-    struct test test = {
-        .i = 123,
-        .str = "foo",
-        .a[0][1] = 1,
-        .a[1][1] = 12,
-        .a[2][0] = 20,
-        .ui = 0x12345678,
-    };
     dump(&test, sizeof(test));
     return 0;
 }

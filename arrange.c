@@ -8,7 +8,7 @@ struct link
 {
     struct link *link;
     char *tag;
-    int iter;
+    int *iter;
 };
 
 char *get_token(void)
@@ -21,6 +21,29 @@ char *get_token(void)
     else
     {
         return 0;
+    }
+}
+
+void output_link(struct link *link)
+{
+    if (!link)
+    {
+        return;
+    }
+
+    if (link->link)
+    {
+        output_link(link->link);
+    }
+
+    if (link->tag)
+    {
+        printf("%s ", link->tag);
+    }
+
+    if (link->iter)
+    {
+        printf("[%d] ", *link->iter);
     }
 }
 
@@ -39,6 +62,9 @@ void output(int elems, int level, struct link *link)
             printf("%s ", token);
         }
     }
+
+    output_link(link);
+
     printf("\n");
 }
 
@@ -57,7 +83,7 @@ int recurse(int argc, char *argv[], int arg, int level, struct link *link)
             int next = 0;
             for (int iter = 0; iter < count; ++iter)
             {
-                next = recurse(argc, argv, arg + 1, level + 1, &(struct link) {.link = link,.tag = tag,.iter = iter });
+                next = recurse(argc, argv, arg + 1, level + 1, &(struct link) {.link = link,.tag = tag,.iter = &iter });
             }
             arg = next;
         }
@@ -68,18 +94,13 @@ int recurse(int argc, char *argv[], int arg, int level, struct link *link)
         else if (isdigit(argv[arg][0]))
         {
             count = atoi(argv[arg]);
-            if (arg + 1 >= argc)
-            {
-                output(count, level, &(struct link) {.link = link,.tag = tag,.iter = 0 });
-            }
-            else if (strcmp(argv[arg + 1], "{"))
+            if (arg + 1 >= argc || strcmp(argv[arg + 1], "{"))
             {
                 output(count, level, &(struct link) {.link = link,.tag = tag,.iter = 0 });
             }
         }
         else
         {
-            assert(0);
             tag = argv[arg];
         }
     }

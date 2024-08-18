@@ -83,7 +83,7 @@ Breaking those arguments down:
         pad 2                   # Another GCC inserted pad
         ui 4                    # The final unsigned integer
 
-The final stage in the pipeline just makes the decorations which describe the elements nicely aligned.
+The final stage in the pipeline just makes the decorations, which describe the elements, nicely aligned.
 
 ## A Terser Output
 

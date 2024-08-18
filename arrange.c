@@ -121,7 +121,6 @@ int recurse(int argc, char *argv[], int arg, int level, struct link *link)
             {
                 output(count, level, &(struct link) {.link = link,.tag = tag,.iter = 0 });
             }
-            tag = 0;
 
             if (eof)
             {

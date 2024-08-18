@@ -65,35 +65,71 @@ void output_link(struct link *link)
     }
 }
 
-void output(int elems, int level, struct link *link)
+struct output_controls
 {
-    for (int indent = 0; indent < level; ++indent)
-    {
-        printf("    ");
-    }
+    int reverse;
+    int hide;
+};
 
-    for (int count = 0; count < elems; ++count)
+void output(int elems, int level, struct link *link, struct output_controls output_controls)
+{
+    int visible = !output_controls.hide;
+
+    if (visible)
     {
-        char *token = get_token();
-        if (token)
+        for (int indent = 0; indent < level; ++indent)
         {
-            printf("%s ", token);
+            printf("    ");
         }
     }
 
-    if (!quiet)
+    char **list = calloc(elems, sizeof(char *));
+
+    for (int index = 0; index < elems; ++index)
     {
-        printf(" # ");
+        list[index] = get_token();
+    }
+
+    if (visible)
+    {
+        if (output_controls.reverse)
+        {
+            for (int index = elems - 1; index >= 0; --index)
+            {
+                printf("%s ", list[index]);
+            }
+        }
+        else
+        {
+            for (int index = 0; index < elems; ++index)
+            {
+                printf("%s ", list[index]);
+            }
+        }
+    }
+
+    for (int index = 0; index < elems; ++index)
+    {
+        free(list[index]);
+    }
+
+    if (!quiet && visible)
+    {
+        printf(" #%s ", output_controls.reverse ? ":r" : ":f");
         output_link(link);
     }
 
-    printf("\n");
+    if (visible)
+    {
+        printf("\n");
+    }
 }
 
-int recurse(int argc, char *argv[], int arg, int level, struct link *link)
+int recurse(int argc, char *argv[], int arg, int level, struct link *link, struct output_controls output_controls_param)
 {
     char *tag = 0;
     int count = 0;
+    struct output_controls output_controls = output_controls_param;
 
     for (; arg < argc; ++arg)
     {
@@ -105,8 +141,9 @@ int recurse(int argc, char *argv[], int arg, int level, struct link *link)
             int next = 0;
             for (int iter = 0; iter < count; ++iter)
             {
-                next = recurse(argc, argv, arg + 1, level + 1, &(struct link) {.link = link,.tag = tag,.iter = &iter });
+                next = recurse(argc, argv, arg + 1, level + 1, &(struct link) {.link = link,.tag = tag,.iter = &iter }, output_controls);
             }
+            output_controls = output_controls_param;
             arg = next;
             tag = 0;
         }
@@ -119,7 +156,8 @@ int recurse(int argc, char *argv[], int arg, int level, struct link *link)
             count = atoi(argv[arg]);
             if (arg + 1 >= argc || strcmp(argv[arg + 1], "{"))
             {
-                output(count, level, &(struct link) {.link = link,.tag = tag,.iter = 0 });
+                output(count, level, &(struct link) {.link = link,.tag = tag,.iter = 0 }, output_controls);
+                output_controls = output_controls_param;
             }
 
             if (eof)
@@ -129,7 +167,22 @@ int recurse(int argc, char *argv[], int arg, int level, struct link *link)
         }
         else
         {
-            tag = argv[arg];
+            if (strlen(argv[arg]) >= 2 && argv[arg][0] == '+')
+            {
+                switch (argv[arg][1])
+                {
+                    case 'r':
+                        output_controls.reverse = 1;
+                        break;
+                    case 'h':
+                        output_controls.hide = 1;
+                        break;
+                }
+            }
+            else
+            {
+                tag = argv[arg];
+            }
         }
     }
     return arg;
@@ -161,7 +214,8 @@ int main(int argc, char *argv[])
 
     do
     {
-        recurse(argc - optind, argv + optind, 0, 0, 0);
+        struct output_controls output_controls = { };
+        recurse(argc - optind, argv + optind, 0, 0, 0, output_controls);
     }
     while (repeat);
     return 0;

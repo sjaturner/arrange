@@ -18,12 +18,14 @@ int repeat;
 int quiet;
 int fill;
 int indices;
+int linear;
 
 int eof;
 
 char *get_token(void)
 {
     char *token = calloc(256 + 1, 1);
+
     if (1 == scanf("%256s", token))
     {
         return strdup(token);
@@ -91,9 +93,16 @@ void output(int elems, int level, struct link *link, struct output_controls outp
 
     if (visible)
     {
-        for (int indent = 0; indent < level; ++indent)
+        if (linear)
         {
-            printf("    ");
+            printf(" ");
+        }
+        else
+        {
+            for (int indent = 0; indent < level; ++indent)
+            {
+                printf("    ");
+            }
         }
     }
 
@@ -111,37 +120,43 @@ void output(int elems, int level, struct link *link, struct output_controls outp
 
     if (visible)
     {
+        int error = 0;
+
         if (output_controls.format)
         {
-            int error = 0;
-            switch (elems)
+            if (elems > 8)
             {
-                case 1:
-                case 2:
-                case 4:
-                case 8:
-                    break;
-                default:
-                    error = 1;
-            }
-
-            if (error)
-            {
-                printf("? ");
+                error = 1;
             }
             else
             {
                 uint64_t value = 0;
                 uint64_t sign = 0;
+
                 for (int index = 0; index < elems; ++index)
                 {
-                    uint64_t byte = strtol(list[index], 0, 16);
+                    if (!list[index])
+                    {
+                        error = 1;
+                        break;
+                    }
+                    char *end = 0;
+                    uint64_t byte = strtol(list[index], &end, 16);
+
+                    if (end - list[index] != 2)
+                    {
+                        error = 1;
+                        break;
+                    }
 
                     sign = (uint64_t)0x80 << 8 * index;
                     value |= (byte & 0xff) << 8 * index;
                 }
 
-                if (output_controls.format == 'd')
+                if (error)
+                {
+                }
+                else if (output_controls.format == 'd')
                 {
                     int64_t output = (value & sign) && elems < 8 ? value - (sign << 1) : value;
                     printf("%" PRId64 " ", output);
@@ -152,29 +167,15 @@ void output(int elems, int level, struct link *link, struct output_controls outp
                 }
                 else if (output_controls.format == 'x')
                 {
-                    char *fmt = 0;
-                    switch (elems)
-                    {
-                        case 1:
-                            fmt = "0x%02" PRIx64 " ";
-                            break;
-                        case 2:
-                            fmt = "0x%04" PRIx64 " ";
-                            break;
-                        case 4:
-                            fmt = "0x%08" PRIx64 " ";
-                            break;
-                        case 8:
-                            fmt = "0x%016" PRIx64 " ";
-                            break;
-                        default:
-                            error = 1;
-                    }
+                    char fmt[0x20] = { };
+
+                    sprintf(fmt, "0x%%0%d" PRIx64 " ", elems * 2);
                     printf(fmt, value);
                 }
             }
         }
-        else
+
+        if (!output_controls.format || error)
         {
             for (int index = 0; index < elems; ++index)
             {
@@ -188,13 +189,15 @@ void output(int elems, int level, struct link *link, struct output_controls outp
         free(list[index]);
     }
 
+    free(list);
+
     if (!quiet && visible)
     {
         printf(" #%s ", output_controls.reverse ? ":r" : ":f");
         output_link(link);
     }
 
-    if (visible)
+    if (!linear && visible)
     {
         printf("\n");
     }
@@ -238,6 +241,10 @@ int recurse(int argc, char *argv[], int arg, int level, struct link *link, struc
 
             if (eof)
             {
+                if (linear)
+                {
+                    printf("\n");
+                }
                 exit(EXIT_SUCCESS);
             }
         }
@@ -247,16 +254,25 @@ int recurse(int argc, char *argv[], int arg, int level, struct link *link, struc
             {
                 switch (argv[arg][1])
                 {
-                    case 'r':
+                    case 'r': /* Reverse. */
                         output_controls.reverse = 1;
                         break;
-                    case 'h':
+                    case 'f': /* Forward. */
+                        output_controls.reverse = 0;
+                        break;
+                    case 'h': /* Hide. */
                         output_controls.hide = 1;
                         break;
-                    case 'u':
-                    case 'd':
-                    case 'x':
+                    case 's': /* Show. */
+                        output_controls.hide = 0;
+                        break;
+                    case 'u': /* Unsigned. */
+                    case 'd': /* Signed. */
+                    case 'x': /* Hexadecimal. */
                         output_controls.format = argv[arg][1];
+                        break;
+                    case 'n': /* No format. */
+                        output_controls.format = 0;
                         break;
                 }
             }
@@ -272,7 +288,7 @@ int recurse(int argc, char *argv[], int arg, int level, struct link *link, struc
 int main(int argc, char *argv[])
 {
     int opt = 0;
-    while ((opt = getopt(argc, argv, "qrfi")) != -1)
+    while ((opt = getopt(argc, argv, "qrfil")) != -1)
     {
         switch (opt)
         {
@@ -288,6 +304,9 @@ int main(int argc, char *argv[])
             case 'i':
                 indices = 1;
                 break;
+            case 'l':
+                linear = 1;
+                break;
             default: /* '?' */
                 exit(EXIT_FAILURE);
         }
@@ -297,7 +316,13 @@ int main(int argc, char *argv[])
     {
         struct output_controls output_controls = { };
         recurse(argc - optind, argv + optind, 0, 0, 0, output_controls);
+
+        if (linear)
+        {
+            printf("\n");
+        }
     }
     while (repeat);
+
     return 0;
 }

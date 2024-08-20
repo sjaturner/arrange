@@ -7,13 +7,6 @@
 #include <inttypes.h>
 #include <unistd.h>
 
-struct link
-{
-    struct link *link;
-    char *tag;
-    int *iter;
-};
-
 int sustain;
 int quiet;
 int extend;
@@ -45,6 +38,13 @@ char *get_token(void)
         return 0;
     }
 }
+
+struct link
+{
+    struct link *link;
+    char *tag;
+    int *iter;
+};
 
 void output_link(struct link *link)
 {

@@ -14,9 +14,9 @@ struct link
     int *iter;
 };
 
-int repeat;
+int sustain;
 int quiet;
-int fill;
+int extend;
 int indices;
 int linear;
 
@@ -30,14 +30,14 @@ char *get_token(void)
     {
         return strdup(token);
     }
-    else if (fill)
+    else if (extend)
     {
-        return "@";
+        return strdup("@");
     }
-    else if (repeat)
+    else if (sustain)
     {
         eof = 1;
-        return "?";
+        return strdup("?");
     }
     else
     {
@@ -186,7 +186,10 @@ void output(int elems, int level, struct link *link, struct output_controls outp
 
     for (int index = 0; index < elems; ++index)
     {
-        free(list[index]);
+        if (list[index])
+        {
+            free(list[index]);
+        }
     }
 
     free(list);
@@ -201,6 +204,36 @@ void output(int elems, int level, struct link *link, struct output_controls outp
     {
         printf("\n");
     }
+}
+
+int set_output_controls(struct output_controls *output_controls, char flag)
+{
+    switch (flag)
+    {
+        case 'r': /* Reverse. */
+            output_controls->reverse = 1;
+            break;
+        case 'f': /* Forward. */
+            output_controls->reverse = 0;
+            break;
+        case 'h': /* Hide. */
+            output_controls->hide = 1;
+            break;
+        case 's': /* Show. */
+            output_controls->hide = 0;
+            break;
+        case 'u': /* Unsigned. */
+        case 'd': /* Signed. */
+        case 'x': /* Hexadecimal. */
+            output_controls->format = flag;
+            break;
+        case 'n': /* No format. */
+            output_controls->format = 0;
+            break;
+        default:
+            return 0;
+    }
+    return 1;
 }
 
 int recurse(int argc, char *argv[], int arg, int level, struct link *link, struct output_controls output_controls_param)
@@ -239,7 +272,7 @@ int recurse(int argc, char *argv[], int arg, int level, struct link *link, struc
                 tag = 0;
             }
 
-            if (eof)
+            if (eof && !extend)
             {
                 if (linear)
                 {
@@ -250,33 +283,17 @@ int recurse(int argc, char *argv[], int arg, int level, struct link *link, struc
         }
         else
         {
+            int control = 0;
+
             if (strlen(argv[arg]) >= 2 && argv[arg][0] == '+')
             {
-                switch (argv[arg][1])
+                if (set_output_controls(&output_controls, argv[arg][1]))
                 {
-                    case 'r': /* Reverse. */
-                        output_controls.reverse = 1;
-                        break;
-                    case 'f': /* Forward. */
-                        output_controls.reverse = 0;
-                        break;
-                    case 'h': /* Hide. */
-                        output_controls.hide = 1;
-                        break;
-                    case 's': /* Show. */
-                        output_controls.hide = 0;
-                        break;
-                    case 'u': /* Unsigned. */
-                    case 'd': /* Signed. */
-                    case 'x': /* Hexadecimal. */
-                        output_controls.format = argv[arg][1];
-                        break;
-                    case 'n': /* No format. */
-                        output_controls.format = 0;
-                        break;
+                    control = 1;
                 }
             }
-            else
+
+            if (control)
             {
                 tag = argv[arg];
             }
@@ -288,33 +305,40 @@ int recurse(int argc, char *argv[], int arg, int level, struct link *link, struc
 int main(int argc, char *argv[])
 {
     int opt = 0;
-    while ((opt = getopt(argc, argv, "qrfil")) != -1)
+    struct output_controls output_controls = { };
+
+    while ((opt = getopt(argc, argv, "qlsei" "rfhsudxn")) != -1)
     {
+        int not_handled = 0;
         switch (opt)
         {
             case 'q':
                 quiet = 1;
                 break;
-            case 'r':
-                repeat = 1;
+            case 'l':
+                linear = 1;
                 break;
-            case 'f':
-                fill = 1;
+            case 's':
+                sustain = 1;
+                break;
+            case 'e':
+                extend = 1;
                 break;
             case 'i':
                 indices = 1;
                 break;
-            case 'l':
-                linear = 1;
-                break;
-            default: /* '?' */
-                exit(EXIT_FAILURE);
+            default:
+                not_handled = 1;
+        }
+
+        if (not_handled && !set_output_controls(&output_controls, opt))
+        {
+            exit(EXIT_FAILURE);
         }
     }
 
     do
     {
-        struct output_controls output_controls = { };
         recurse(argc - optind, argv + optind, 0, 0, 0, output_controls);
 
         if (linear)
@@ -322,7 +346,7 @@ int main(int argc, char *argv[])
             printf("\n");
         }
     }
-    while (repeat);
+    while (sustain && !eof);
 
     return 0;
 }

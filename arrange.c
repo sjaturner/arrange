@@ -12,6 +12,7 @@ int quiet;
 int extend;
 int indices;
 int linear;
+int prefix;
 
 int eof;
 
@@ -69,13 +70,6 @@ void output_link(struct link *link)
     }
 }
 
-struct output_controls
-{
-    int reverse;
-    int hide;
-    char format;
-};
-
 void reverse_pointer_list(int elems, char **list)
 {
     for (int index = 0; index < elems / 2; ++index)
@@ -87,7 +81,15 @@ void reverse_pointer_list(int elems, char **list)
     }
 }
 
-void output(int elems, int level, struct link *link, struct output_controls output_controls)
+struct output_controls
+{
+    int reverse;
+    int hide;
+    char format;
+    int offset;
+};
+
+void output(int elems, int level, struct link *link, struct output_controls output_controls, char **prefix, unsigned *offset)
 {
     int visible = !output_controls.hide;
 
@@ -110,7 +112,14 @@ void output(int elems, int level, struct link *link, struct output_controls outp
 
     for (int index = 0; index < elems; ++index)
     {
-        list[index] = get_token();
+        char *token = get_token();
+        ++*offset;
+
+        if (!level && prefix && !*prefix)
+        {
+            *prefix = strdup(token);
+        }
+        list[index] = token;
     }
 
     if (output_controls.reverse)
@@ -121,6 +130,11 @@ void output(int elems, int level, struct link *link, struct output_controls outp
     if (visible)
     {
         int error = 0;
+
+        if (prefix && *prefix)
+        {
+            printf("%s ", *prefix);
+        }
 
         if (output_controls.format)
         {
@@ -196,7 +210,12 @@ void output(int elems, int level, struct link *link, struct output_controls outp
 
     if (!quiet && visible)
     {
-        printf(" #%s ", output_controls.reverse ? ":r" : ":f");
+        printf(" # %s ", output_controls.reverse ? "+r" : "+f");
+
+        if (output_controls.offset)
+        {
+            printf("%u ", *offset);
+        }
         output_link(link);
     }
 
@@ -230,13 +249,16 @@ int set_output_controls(struct output_controls *output_controls, char flag)
         case 'n': /* No format. */
             output_controls->format = 0;
             break;
+        case 'o': /* Add an offset field. */
+            output_controls->offset = 1;
+            break;
         default:
             return 0;
     }
     return 1;
 }
 
-int recurse(int argc, char *argv[], int arg, int level, struct link *link, struct output_controls output_controls_param)
+int recurse(int argc, char *argv[], int arg, int level, struct link *link, struct output_controls output_controls_param, char **prefix, unsigned *offset)
 {
     char *tag = 0;
     int count = 0;
@@ -250,9 +272,10 @@ int recurse(int argc, char *argv[], int arg, int level, struct link *link, struc
         else if (!strcmp(argv[arg], "{"))
         {
             int next = 0;
+
             for (int iter = 0; iter < count; ++iter)
             {
-                next = recurse(argc, argv, arg + 1, level + 1, &(struct link) {.link = link,.tag = tag,.iter = &iter }, output_controls);
+                next = recurse(argc, argv, arg + 1, level + 1, &(struct link) {.link = link,.tag = tag,.iter = &iter }, output_controls, prefix, offset);
             }
             output_controls = output_controls_param;
             arg = next;
@@ -267,7 +290,7 @@ int recurse(int argc, char *argv[], int arg, int level, struct link *link, struc
             count = atoi(argv[arg]);
             if (arg + 1 >= argc || strcmp(argv[arg + 1], "{"))
             {
-                output(count, level, &(struct link) {.link = link,.tag = tag,.iter = 0 }, output_controls);
+                output(count, level, &(struct link) {.link = link,.tag = tag,.iter = 0 }, output_controls, prefix, offset);
                 output_controls = output_controls_param;
                 tag = 0;
             }
@@ -293,7 +316,7 @@ int recurse(int argc, char *argv[], int arg, int level, struct link *link, struc
                 }
             }
 
-            if (control)
+            if (!control)
             {
                 tag = argv[arg];
             }
@@ -307,7 +330,7 @@ int main(int argc, char *argv[])
     int opt = 0;
     struct output_controls output_controls = { };
 
-    while ((opt = getopt(argc, argv, "qlsei" "rfhsudxn")) != -1)
+    while ((opt = getopt(argc, argv, "qlseip" "rfhsudxno")) != -1)
     {
         int not_handled = 0;
         switch (opt)
@@ -327,6 +350,9 @@ int main(int argc, char *argv[])
             case 'i':
                 indices = 1;
                 break;
+            case 'p':
+                prefix = 1;
+                break;
             default:
                 not_handled = 1;
         }
@@ -339,7 +365,14 @@ int main(int argc, char *argv[])
 
     do
     {
-        recurse(argc - optind, argv + optind, 0, 0, 0, output_controls);
+        char *prefix_buffer = 0;
+        unsigned int offset_buffer = 0;
+        recurse(argc - optind, argv + optind, 0, 0, 0, output_controls, prefix ? &prefix_buffer : 0, &offset_buffer);
+
+        if (prefix_buffer)
+        {
+            free(prefix_buffer);
+        }
 
         if (linear)
         {

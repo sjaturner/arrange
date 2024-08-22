@@ -91,23 +91,6 @@ struct output_controls
 
 void output(int elems, int level, struct link *link, struct output_controls output_controls, char **prefix, unsigned *offset)
 {
-    int visible = !output_controls.hide;
-
-    if (visible)
-    {
-        if (linear)
-        {
-            printf(" ");
-        }
-        else
-        {
-            for (int indent = 0; indent < level; ++indent)
-            {
-                printf("    ");
-            }
-        }
-    }
-
     char **list = calloc(elems, sizeof(char *));
 
     for (int index = 0; index < elems; ++index)
@@ -122,19 +105,33 @@ void output(int elems, int level, struct link *link, struct output_controls outp
         list[index] = token;
     }
 
-    if (output_controls.reverse)
-    {
-        reverse_pointer_list(elems, list);
-    }
+    int visible = !output_controls.hide;
 
     if (visible)
     {
-        int error = 0;
-
         if (prefix && *prefix)
         {
             printf("%s ", *prefix);
         }
+
+        if (linear)
+        {
+            printf(" ");
+        }
+        else
+        {
+            for (int indent = 0; indent < level; ++indent)
+            {
+                printf("   ");
+            }
+        }
+
+        if (output_controls.reverse)
+        {
+            reverse_pointer_list(elems, list);
+        }
+
+        int error = 0;
 
         if (output_controls.format)
         {
@@ -196,6 +193,32 @@ void output(int elems, int level, struct link *link, struct output_controls outp
                 printf("%s ", list[index]);
             }
         }
+
+        if (!quiet)
+        {
+            printf("# ");
+
+            output_link(link);
+
+            printf("%s ", output_controls.reverse ? "+r" : "");
+
+            printf("# ");
+
+            if (output_controls.format)
+            {
+                printf("+%c ", output_controls.format);
+            }
+
+            if (output_controls.offset)
+            {
+                printf("+o %u ", *offset);
+            }
+        }
+
+        if (!linear)
+        {
+            printf("\n");
+        }
     }
 
     for (int index = 0; index < elems; ++index)
@@ -208,21 +231,6 @@ void output(int elems, int level, struct link *link, struct output_controls outp
 
     free(list);
 
-    if (!quiet && visible)
-    {
-        printf(" # %s ", output_controls.reverse ? "+r" : "+f");
-
-        if (output_controls.offset)
-        {
-            printf("%u ", *offset);
-        }
-        output_link(link);
-    }
-
-    if (!linear && visible)
-    {
-        printf("\n");
-    }
 }
 
 int set_output_controls(struct output_controls *output_controls, char flag)

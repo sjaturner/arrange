@@ -363,7 +363,7 @@ int main(int argc, char *argv[])
     int opt = 0;
     struct output_controls output_controls = { };
 
-    while ((opt = getopt(argc, argv, "qlseipf:" "rfhsudxno")) != -1)
+    while ((opt = getopt(argc, argv, "qlseipf:" "rfhsudxnoc")) != -1)
     {
         int not_handled = 0;
         switch (opt)

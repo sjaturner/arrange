@@ -13,6 +13,7 @@ int extend;
 int indices;
 int linear;
 int prefix;
+unsigned int fields;
 
 int eof;
 
@@ -135,7 +136,30 @@ void output(int elems, int level, struct link *link, struct output_controls outp
 
         if (output_controls.format)
         {
-            if (elems > 8)
+            if (output_controls.format == 'c')
+            {
+                printf("\"");
+                for (int index = 0; index < elems; ++index)
+                {
+                    if (!list[index])
+                    {
+                        error = 1;
+                        break;
+                    }
+                    char *end = 0;
+                    uint64_t byte = strtol(list[index], &end, 16);
+
+                    if (end - list[index] != 2)
+                    {
+                        error = 1;
+                        break;
+                    }
+
+                    printf("%c", isprint(byte) ? (char)byte : '?');
+                }
+                printf("\" ");
+            }
+            else if (elems > 8)
             {
                 error = 1;
             }
@@ -252,6 +276,7 @@ int set_output_controls(struct output_controls *output_controls, char flag)
         case 'u': /* Unsigned. */
         case 'd': /* Signed. */
         case 'x': /* Hexadecimal. */
+        case 'c': /* Hexadecimal. */
             output_controls->format = flag;
             break;
         case 'n': /* No format. */
@@ -338,7 +363,7 @@ int main(int argc, char *argv[])
     int opt = 0;
     struct output_controls output_controls = { };
 
-    while ((opt = getopt(argc, argv, "qlseip" "rfhsudxno")) != -1)
+    while ((opt = getopt(argc, argv, "qlseipf:" "rfhsudxno")) != -1)
     {
         int not_handled = 0;
         switch (opt)
@@ -361,6 +386,9 @@ int main(int argc, char *argv[])
             case 'p':
                 prefix = 1;
                 break;
+            case 'f':
+                fields = atoi(optarg);
+                break;
             default:
                 not_handled = 1;
         }
@@ -376,6 +404,16 @@ int main(int argc, char *argv[])
         char *prefix_buffer = 0;
         unsigned int offset_buffer = 0;
         recurse(argc - optind, argv + optind, 0, 0, 0, output_controls, prefix ? &prefix_buffer : 0, &offset_buffer);
+
+        while (fields && offset_buffer++ < fields)
+        {
+            char *token = get_token();
+
+            if (token)
+            {
+                free(token);
+            }
+        }
 
         if (prefix_buffer)
         {

@@ -4,7 +4,7 @@ _A debugging tool_
 
 ## Introduction
 
-This program is a command line too which operates on a stream of space
+This program is a command line tool which operates on a stream of space
 separated tokens and arranges them in a structured format which is sent
 to stdout.
 
@@ -195,7 +195,7 @@ Or for the full picture we can expand the array completely (note the additional 
           00                # a [2] [1]  #
     78 56 34 12             # ui         #
 
-It'd be nice to see those numbers in decimal form, there's a flag for that ("-s") ...
+It'd be nice to see those numbers in decimal form, there's a flag for that ("-u") ...
 
     :; ./test | ./arrange -i -u i 4 pad +h 4 str 8 a 3 { 2 { 1 } } pad +h 2 ui 4 | column -t -s '#' -o '#'
     123            # i          # +u
@@ -232,8 +232,8 @@ Looking back at the original code, that resembles the initialisation.
 ## An apology
 
 This is an inelegant program, it does too much and lacks orthogonality. However, it's been
-shaped by my requirements. I have spend so long formatting structures in my head, which
-is error prone and tiring. I hope that this effort will save me time in future, but on balance
+shaped by my requirements. I have spend a lot of time formatting structures in my head, it's 
+error prone and tiring. I hope that this effort will save me time in future, but on balance
 the saving will be small. Unless somebody else gets some use from it too ...
 
 ## Flags and Command Line Syntax
@@ -318,7 +318,6 @@ Some new flags there:
 
     -f 21
 
-
         There are 21 items on a line ...
 
             :; head -1 records | wc -w
@@ -331,7 +330,7 @@ Some new flags there:
         tail of the structure - which can be a tedious balancing act.
 
 But perhaps we want to put this data into Matlab / Octave - Just the measurement
-and timestamp. The simplest way to get numbers into octave is a text file of numbers with
+and timestamp. The simplest way to get numbers into Octave is a text file of numbers with
 one record per line. Adapting the above, we get:
 
     :; cat records | ./arrange -s -f 21 -l -h -q timestamp +s 1 sequence 2 cycles 8 type 1 measurement +s +d +r 2 | column -t -s '#' -o '#'
@@ -339,7 +338,7 @@ one record per line. Adapting the above, we get:
      1724506090.542137  -16096
      1724506091.770475  -15808
 
-That output would go straight into Octave.
+That output would go straight into Octave :-)
 
 Looking at the new flags:
 
@@ -348,8 +347,12 @@ Looking at the new flags:
     -h
         Hide every part of the tree
     -q
-        Suppress the decorative output, octave really just wants the numbers
+        Suppress the decorative output, Octave really just wants the numbers
 
-The +s on timestamp and measurement extract those. The +d on the
-measurement says this is an integer and the +r says that the byte order
+The "+s" on timestamp and measurement extract those. The "+d" on the
+measurement says this is an integer and the "+r" says that the byte order
 needs to be swapped.
+
+## Similar programs
+
+This looks interesting, and way more capable: https://www.gnu.org/software/poke/

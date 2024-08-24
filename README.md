@@ -163,9 +163,9 @@ between the pad identifier and the token count which follows, like so:
 A full list of the controls is listed in the "Flags and Command Line Syntax" section 
 later.
 
-Worth mentioning is that the controls act heirarchically, everything in
+Worth mentioning is that the controls act hierarchically, everything in
 the tree structure below the control will have that control applied. Those
-controls can be countermanded further down, if neccessary.
+controls can be countermanded further down, if necessary.
 
 It can be useful to see array indexes, too. That's just a command line flag 
 at the moment "-i".
@@ -225,5 +225,35 @@ formats.
 
 Looking back at the original code, that resembles the initialisation.
 
+## An apology
+
+This is an inelegant program, it does too much and lacks orthogonality. However, it's been 
+shaped by my requrirements. I have spend so long formatting structures in my head, which 
+is error prone and tiring. I hope that this effort will save me time in future, but on balance 
+the saving will be small. Unless somebody else gets some use from it too ...
+
 ## Flags and Command Line Syntax
+
+The arrange program shows this help when run without arguments:
+
+    Flags:
+        -q Quiet operation, show no additional decorations
+        -l Linear mode, instead of displaying the indented structure place the output on a single line
+        -s Sustain, keep reapplying the commands as if the structure described repeats indefinitely
+        -e Extend, extend the input token list to satisfy all of the command line arguments
+        -p Prefix, allows the first token on the line to act as a prefix for all output, intended for timestamps
+        -f Assume that there are this many tokens to interpret before restarting the decode
+    Flags or Commands
+        -r, +r Reverse bytes, useful for handling endianness
+        -f, +f Forward, which countermands reverse
+        -h, +h Hide elements
+        -s, +s Show elements, which countermands hide
+        -u, +u Format any set of less than eight bytes as unsigned
+        -d, +d Format any set of less than eight bytes as signed
+        -x, +x Format any set of less than eight bytes as hexadecimal
+        -c, +c Format as characters check using isprint, anything which fails will be printed as "?"
+        -n, +n Stop current formatting and just go back to outputting tokens
+        -o, +o Adds a decoration with the offset of the element, useful for poking structures
+        -i, +i Print indices for arrays
+
 ## Examples

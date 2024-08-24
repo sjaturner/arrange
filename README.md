@@ -317,12 +317,18 @@ Some new flags there:
         The first element of every record is a prefix for the remaining lines
 
     -f 21
-        There are 21 items on a line so assume that after processing the
-        args the next record is 21 elements from the first.  There is
-        a subtly here. The arrange program is no aware of line breaks
-        so it needs either to be told the record length, or you have to
-        account for the data at the tail of the structure - which can
-        be a tedious balancing act.
+
+
+        There are 21 items on a line ...
+
+            :; head -1 records | wc -w
+            21
+
+        So assume that after processing the args the next record is 21
+        elements from the first.  There is a subtly here. The arrange
+        program is no aware of line breaks so it needs either to be told
+        the record length, or you have to account for the data at the
+        tail of the structure - which can be a tedious balancing act.
 
 But perhaps we want to put this data into Matlab / Octave - Just the measurement
 and timestamp. The simplest way to get numbers into octave is a text file of numbers with

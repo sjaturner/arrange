@@ -10,7 +10,6 @@
 int sustain;
 int quiet;
 int extend;
-int indices;
 int linear;
 int prefix;
 unsigned int fields;
@@ -48,7 +47,7 @@ struct link
     int *iter;
 };
 
-void output_link(struct link *link)
+void output_link(struct link *link, int indices)
 {
     if (!link)
     {
@@ -57,7 +56,7 @@ void output_link(struct link *link)
 
     if (link->link)
     {
-        output_link(link->link);
+        output_link(link->link, indices);
     }
 
     if (link->tag)
@@ -88,6 +87,7 @@ struct output_controls
     int hide;
     char format;
     int offset;
+    int indices;
 };
 
 void output(int elems, int level, struct link *link, struct output_controls output_controls, char **prefix, unsigned *offset)
@@ -222,7 +222,7 @@ void output(int elems, int level, struct link *link, struct output_controls outp
         {
             printf("# ");
 
-            output_link(link);
+            output_link(link, output_controls.indices);
 
             printf("%s ", output_controls.reverse ? "+r" : "");
 
@@ -284,6 +284,9 @@ int set_output_controls(struct output_controls *output_controls, char flag)
             break;
         case 'o': /* Add an offset field. */
             output_controls->offset = 1;
+            break;
+        case 'i': /* Add an offset field. */
+            output_controls->indices = 1;
             break;
         default:
             return 0;
@@ -363,7 +366,7 @@ int main(int argc, char *argv[])
     int opt = 0;
     struct output_controls output_controls = { };
 
-    while ((opt = getopt(argc, argv, "qlseipf:" "rfhsudxnoc")) != -1)
+    while ((opt = getopt(argc, argv, "qlsepf:" "rfhsudxnoci")) != -1)
     {
         int not_handled = 0;
         switch (opt)
@@ -379,9 +382,6 @@ int main(int argc, char *argv[])
                 break;
             case 'e':
                 extend = 1;
-                break;
-            case 'i':
-                indices = 1;
                 break;
             case 'p':
                 prefix = 1;

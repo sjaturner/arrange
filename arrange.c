@@ -1,3 +1,25 @@
+/*
+ * Copyright (c) 2020 Simon Turner
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 #include <assert.h>
 #include <ctype.h>
 #include <stdio.h>
@@ -6,6 +28,31 @@
 #include <string.h>
 #include <inttypes.h>
 #include <unistd.h>
+
+void usage(void)
+{
+    printf("See https://github.com/sjaturner/arrange\n");
+    printf("\n");
+    printf("Flags:\n");
+    printf("    -q Quiet operation, show no additional decorations\n");
+    printf("    -l Linear mode, instead of displaying the indented structure place the output on a single line\n");
+    printf("    -s Sustain, keep reapplying the commands as if the structure described repeats indefinitely\n");
+    printf("    -e Extend, extend the input token list to satisfy all of the command line arguments\n");
+    printf("    -p Prefix, allows the first token on the line to act as a prefix for all output, intended for timestamps\n");
+    printf("    -f Assume that there are this many tokens to interpret before restarting the decode\n");
+    printf("Flags or Commands\n");
+    printf("    -r, +r Reverse bytes, useful for handling endianness\n");
+    printf("    -f, +f Forward, which countermands reverse\n");
+    printf("    -h, +h Hide elements\n");
+    printf("    -s, +s Show elements, which countermands hide\n");
+    printf("    -u, +u Format any set of less than eight bytes as unsigned\n");
+    printf("    -d, +d Format any set of less than eight bytes as signed\n");
+    printf("    -x, +x Format any set of less than eight bytes as hexadecimal\n");
+    printf("    -c, +c Format as characters check using isprint, anything which fails will be printed as '?'\n");
+    printf("    -n, +n Stop current formatting and just go back to outputting tokens\n");
+    printf("    -o, +o Adds a decoration with the offset of the element, useful for poking structures\n");
+    printf("    -i, +i Print indices for arrays\n");
+}
 
 int sustain;
 int quiet;
@@ -366,6 +413,12 @@ int main(int argc, char *argv[])
     int opt = 0;
     struct output_controls output_controls = { };
 
+    if (argc == 1)
+    {
+        usage();
+        exit(EXIT_SUCCESS);
+    }
+
     while ((opt = getopt(argc, argv, "qlsepf:" "rfhsudxnoci")) != -1)
     {
         int not_handled = 0;
@@ -427,5 +480,5 @@ int main(int argc, char *argv[])
     }
     while (sustain && !eof);
 
-    return 0;
+    exit(EXIT_SUCCESS);
 }

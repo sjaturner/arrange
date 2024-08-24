@@ -70,7 +70,11 @@ DWARF information to make JSON.
 However, for debugging, it's sometimes easier to do something ad hoc. 
 My observation is that C structures are often small and simple.
 
-## A small example
+I also like command line tools which can be used incrementally and in 
+a guided fashion to home in on areas of interest. I have tried to 
+capture that here.
+
+## A short example
 
 This directory contains a file called test.c, it defines a simple C structure, 
 initialises it and then dumps its contents using the dump function above.
@@ -228,13 +232,15 @@ Looking back at the original code, that resembles the initialisation.
 ## An apology
 
 This is an inelegant program, it does too much and lacks orthogonality. However, it's been 
-shaped by my requrirements. I have spend so long formatting structures in my head, which 
+shaped by my requirements. I have spend so long formatting structures in my head, which 
 is error prone and tiring. I hope that this effort will save me time in future, but on balance 
 the saving will be small. Unless somebody else gets some use from it too ...
 
 ## Flags and Command Line Syntax
 
 The arrange program shows this help when run without arguments:
+
+    See https://github.com/sjaturner/arrange
 
     Flags:
         -q Quiet operation, show no additional decorations
@@ -251,7 +257,7 @@ The arrange program shows this help when run without arguments:
         -u, +u Format any set of less than eight bytes as unsigned
         -d, +d Format any set of less than eight bytes as signed
         -x, +x Format any set of less than eight bytes as hexadecimal
-        -c, +c Format as characters check using isprint, anything which fails will be printed as "?"
+        -c, +c Format as characters check using isprint, anything which fails will be printed as '?'
         -n, +n Stop current formatting and just go back to outputting tokens
         -o, +o Adds a decoration with the offset of the element, useful for poking structures
         -i, +i Print indices for arrays
